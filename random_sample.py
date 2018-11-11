@@ -1,29 +1,50 @@
 import random
 import os
+import math
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from glob import glob
 
-raw_dir = 'data/data_Q4_2016'
-fail_csv = 'data_Q4_2016_fail.csv'
-fails = pd.read_csv(fail_csv)
-num_fails = len(fails.index)
+data_path = "data/2015"
+fail_path = '%s_failures.csv' % os.path.basename(data_path)
+out_path = '%s_sample.csv' % os.path.basename(data_path)
 
-raw_files = glob(os.path.join(raw_dir, '*.csv'))
-num_raw = len(raw_files)
+def rand_undersample(args):
+    samp = pd.DataFrame()
+    fails = pd.read_csv(args.fail)
+    num_fails = len(fails.index)
 
-train = fails
+    files = glob(os.path.join(args.path, '*.csv'))
 
-count = 0
-while count < num_fails:
-    rand_file = random.choice(raw_files)
-    df = pd.read_csv(rand_file)
-    rand_row = df.sample(1)
+    # Oversample per file
+    samp_per_file = math.ceil(num_fails/len(files)) * 2
+    i = 0
+    
+    for file in files:
+        try:
+            df = pd.read_csv(file)
+            s = df[df['failure'] == 0].sample(samp_per_file)
+            i = i + samp_per_file
+            print("[{}/{}] nominal sample from {}".format(i, num_fails, file))
+            samp = samp.append(s)
+        except KeyboardInterrupt:
+            break
+        except:
+            continue
 
-    if not rand_row['failure'].any():
-        print(count, 'Sampled', rand_file)
-        train = train.append(rand_row)
-        count = count + 1
+    # Resample to exact amount
+    samp = samp.sample(num_fails)
 
-train.to_csv('data_Q4_2016_train.csv')
+    print("Saving {} samples to {}".format(num_fails, args.out))
+    samp.to_csv(args.out, index=False)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Create training csv by combining failures and sampling nominal data')
+    parser.add_argument('-f', '--fail', default=fail_path, help='fail csv')
+    parser.add_argument('-p', '--path', default=data_path, help='path to data directory')
+    parser.add_argument('-o', '--out', default=out_path, help='output file name (xxx.csv)')
+
+    args = parser.parse_args()
+    rand_undersample(args)
