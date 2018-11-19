@@ -17,6 +17,7 @@ def save_failures(args):
     for file in files:
         all = pd.read_csv(file)
         fails = all[all['failure'] == 1]
+        fails = fails[fails['capacity_bytes'] > 0]
 
         print("[{}/{}] {} failures from {}".format(i, len(files), len(fails.index), file))
 
