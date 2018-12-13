@@ -1,39 +1,50 @@
 #helper functions
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import f1_score
+from sklearn.metrics import roc_curve, precision_recall_curve, auc
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import confusion_matrix
 
+import numpy as np
+
+def weighted_evaluation_metrics(y_pred, y_label, sample_weights, thresh=0.5):
+    y_pred_ = 1*(y_pred>thresh)
+    fpr, tpr, thresholds = roc_curve(y_label, y_pred, pos_label=1, sample_weight=sample_weights)
+
+    eval = \
+    {
+        'accuracy'  : accuracy_score(y_label, y_pred_), 
+        'precision' : precision_score(y_label, y_pred_, pos_label=1, sample_weight=sample_weights),
+        'recall'    : recall_score(y_label, y_pred_, pos_label=1, sample_weight=sample_weights),
+        'f1'        : f1_score(y_label, y_pred_, pos_label=1, sample_weight=sample_weights),
+        'confusion' : confusion_matrix(y_label, y_pred_, sample_weight=sample_weights),
+        'roc_auc'   : auc(fpr, tpr),
+        'fpr'       : fpr,
+        'tpr'       : tpr,
+        'thresholds': thresholds,
+    }
+
+    return eval
 
 def evaluation_metrics(y_pred, y_label, thresh=0.5):
-    true_pos = []
-    true_neg = []
-    false_pos = []
-    false_neg = []
-
-    for i in range(len(y_pred)):
-        if y_label[i] < thresh and y_pred[i] < thresh:
-            true_neg.append(i)
-        elif y_label[i] > thresh and y_pred[i] > thresh:
-            true_pos.append(i)
-        elif y_label[i] < thresh and y_pred[i] > thresh:
-            false_pos.append(i)
-        elif y_label[i] > thresh and y_pred[i] < thresh:
-            false_neg.append(i)
-
-    TP = len(true_pos)
-    TN = len(true_neg)
-    FP = len(false_pos)
-    FN = len(false_neg)
-
+    #thresh = np.median(y_pred)
+    #print(thresh)
+    y_pred_ = 1*(y_pred>thresh)
     fpr, tpr, thresholds = roc_curve(y_label, y_pred, pos_label=1)
 
     eval = \
     {
-        'accuracy'  : (TP + TN) / (TP + TN + FP + FN) if (TP + TN + FP + FN) > 0 else 0, 
-        'precision' : TP / (TP + FP) if (TP + FP) > 0 else 0,
-        'recall'    : TP / (TP + FN) if (TP + FN) > 0 else 0,
-        'f1'        : (2*TP) / (2*TP + FP + FN) if (2*TP + FP + FN) > 0 else 0,
+        'accuracy'  : accuracy_score(y_label, y_pred_), 
+        'precision' : precision_score(y_label, y_pred_, pos_label=1),
+        'recall'    : recall_score(y_label, y_pred_, pos_label=1),
+        'f1'        : f1_score(y_label, y_pred_, pos_label=1),
+        'confusion' : confusion_matrix(y_label, y_pred_),
         'roc_auc'   : auc(fpr, tpr),
         'fpr'       : fpr,
-        'tpr'       : tpr
+        'tpr'       : tpr,
+        'thresholds': thresholds,
     }
 
     return eval
