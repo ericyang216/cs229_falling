@@ -15,11 +15,12 @@ def weighted_evaluation_metrics(y_pred, y_label, sample_weights, thresh=0.5):
 
     eval = \
     {
-        'accuracy'  : accuracy_score(y_label, y_pred_), 
+        'accuracy'  : accuracy_score(y_label, y_pred_, sample_weight=sample_weights), 
         'precision' : precision_score(y_label, y_pred_, pos_label=1, sample_weight=sample_weights),
         'recall'    : recall_score(y_label, y_pred_, pos_label=1, sample_weight=sample_weights),
         'f1'        : f1_score(y_label, y_pred_, pos_label=1, sample_weight=sample_weights),
         'confusion' : confusion_matrix(y_label, y_pred_, sample_weight=sample_weights),
+        'specificity': recall_score(y_label, y_pred_, pos_label=0, sample_weight=sample_weights),
         'roc_auc'   : auc(fpr, tpr),
         'fpr'       : fpr,
         'tpr'       : tpr,
@@ -41,6 +42,7 @@ def evaluation_metrics(y_pred, y_label, thresh=0.5):
         'recall'    : recall_score(y_label, y_pred_, pos_label=1),
         'f1'        : f1_score(y_label, y_pred_, pos_label=1),
         'confusion' : confusion_matrix(y_label, y_pred_),
+        'specificity': recall_score(y_label, y_pred_, pos_label=1),
         'roc_auc'   : auc(fpr, tpr),
         'fpr'       : fpr,
         'tpr'       : tpr,
